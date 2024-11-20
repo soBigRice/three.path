@@ -773,7 +773,6 @@
 		const uv2 = [];
 		const indices = [];
 		let verticesCount = 0;
-		new three.Vector3();
 		function addVertices(pathPoint, width, height) {
 			const first = position.length === 0;
 			const uvDist = pathPoint.dist / circum;
@@ -781,6 +780,8 @@
 			// const width = 1;
 			// const height = 0.5;
 
+			let totalR = (width + height) * 2;
+			let nowDis = 0;
 			for (let r = 0; r <= 4; r++) {
 				// debugger;
 				// let _r = r;
@@ -822,9 +823,14 @@
 				//得到最终的位置
 				position.push(finalPos.x, finalPos.y, finalPos.z);
 				normal.push(normalDir.x, normalDir.y, normalDir.z);
-				uv.push(uvDist, r / 4);
+				if (r == 1 || r == 3) {
+					nowDis += width;
+				} else if (r == 2 || r == 4) {
+					nowDis += height;
+				}
+				uv.push(uvDist, nowDis / totalR);
 				if (generateUv2) {
-					uv2.push(uvDist2, r / 4);
+					uv2.push(uvDist2, nowDis / totalR);
 				}
 				verticesCount++;
 			}
