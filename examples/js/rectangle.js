@@ -50,10 +50,10 @@ window.onload = function () {
   pathPointList.set(points, 0.3, 10, false);
 
   // create geometry
-  const radius = 0.2;
+
   const geometry = new THREE.PathRectangleGeometry({
     pathPointList: pathPointList,
-    options: { radius: radius, radialSegments: 4, width: 1, height: 0.5 },
+    options: { width: 1, height: 0.5 },
     usage: THREE.DynamicDrawUsage,
   });
 
@@ -61,16 +61,17 @@ window.onload = function () {
     "images/diffuse.jpg",
     function (texture) {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(0.5, 0.5);
       texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     }
   );
 
   const material = new THREE.MeshPhongMaterial({
     color: 0x58dede,
-    depthWrite: true,
+    // depthWrite: true,
     transparent: true,
     opacity: 0.9,
-    side: THREE.FrontSide,
+    // side: THREE.FrontSide,
   });
   material.map = texture;
 
@@ -82,8 +83,8 @@ window.onload = function () {
     color: [88, 222, 222],
     scrollUV: true,
     scrollSpeed: 0.03,
-    radius: 0.2,
-    radialSegments: 8,
+    width: 1,
+    height: 0.5,
     cornerRadius: 0.3,
     cornerSplit: 10,
     progress: 1,
@@ -104,24 +105,22 @@ window.onload = function () {
   gui.add(params, "scrollUV");
   gui.add(params, "scrollSpeed").min(-0.1).max(0.1);
   gui
-    .add(params, "radius")
+    .add(params, "width")
     .min(0.1)
     .max(1)
     .onChange(function () {
       geometry.update(pathPointList, {
-        radius: params.radius,
-        radialSegments: params.radialSegments,
+        radius: params.width,
       });
     });
   gui
-    .add(params, "radialSegments")
+    .add(params, "height")
     .min(2)
     .max(10)
     .step(1)
     .onChange(function () {
       geometry.update(pathPointList, {
-        radius: params.radius,
-        radialSegments: params.radialSegments,
+        radialSegments: params.height,
       });
     });
   gui
@@ -132,8 +131,6 @@ window.onload = function () {
     .listen()
     .onChange(function () {
       geometry.update(pathPointList, {
-        radius: params.radius,
-        radialSegments: params.radialSegments,
         progress: params.progress,
       });
     });
@@ -192,7 +189,7 @@ window.onload = function () {
 
     if (params.scrollUV) {
       texture.offset.x -= params.scrollSpeed;
-      texture.repeat.x = 1;
+      // texture.repeat.x = 1;
     }
 
     renderer.render(scene, camera);

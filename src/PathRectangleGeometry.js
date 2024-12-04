@@ -101,15 +101,14 @@ class PathRectangleGeometry extends PathGeometry {
 // Vertex Data Generate Functions
 
 function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
-  const radius = options.radius || 0.1;
   const progress = options.progress !== undefined ? options.progress : 1;
   const width = options.width || 1;
   const height = options.height || 0.5;
 
   // debugger;
 
-  const circum = radius * 2 * Math.PI;
   const totalDistance = pathPointList.distance();
+
   const progressDistance = progress * totalDistance;
   if (progressDistance == 0) {
     return null;
@@ -123,100 +122,110 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
   const uv = [];
   const uv2 = [];
   const indices = [];
-  let verticesCount = 0;
 
-  function addVertices(pathPoint, width, height) {
-    const first = position.length === 0;
-    const uvDist = pathPoint.dist / circum;
-    const uvDist2 = pathPoint.dist / totalDistance;
-    // const width = 1;
-    // const height = 0.5;
+  //高度宽度的一半来计算
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+  const sideTotalDis = (width + height) * 2;
 
-    let totalR = (width + height) * 2;
-    let nowDis = 0;
-    for (let r = 0; r <= 4; r++) {
-      // debugger;
-      // let _r = r;
-      // if (_r == 4) {
-      //   _r = 0;
-      // }
-      // normalDir
-      //   .copy(pathPoint.up)
-      //   .applyAxisAngle(
-      //     pathPoint.dir,
-      //     startRad + Math.PI / 4 + (Math.PI * 2 * _r) / 4
-      //   )
-      //   .normalize();
+  //添加顶点
+  function addVertices(pathPoint) {
+    // console.log(pathPoint, "路径点");
 
-      // position.push(
-      //   pathPoint.pos.x + normalDir.x * radius * pathPoint.widthScale,
-      //   pathPoint.pos.y + normalDir.y * radius * pathPoint.widthScale,
-      //   pathPoint.pos.z + normalDir.z * radius * pathPoint.widthScale
-      // );
+    const centerPosition = pathPoint.pos.clone();
+    const up = pathPoint.up.clone();
+    const right = pathPoint.right.clone();
 
-      //点的位置
-      const pos = pathPoint.pos.clone();
-      //叉乘得到垂直于两个向量的垂向量
-      const normalDir = pathPoint.up
-        .clone()
-        .cross(pathPoint.dir.clone())
-        .normalize();
+    // A---------B
+    // |         |
+    // |    o    |
+    // |         |
+    // D---------C
 
-      //先只计算高度
-      const heightPos = pathPoint.up
-        .clone()
-        .normalize()
-        .multiplyScalar(height / 2);
-      if (r == 2 || r == 3) {
-        heightPos.negate();
-      }
+    //先从position开始算起
 
-      //在计算宽度
-      const widthPos = normalDir.clone().multiplyScalar(width / 2);
+    const A = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(halfHeight))
+      .add(right.clone().multiplyScalar(-halfWidth));
+    const A1 = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(halfHeight))
+      .add(right.clone().multiplyScalar(-halfWidth));
+    const B = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(halfHeight))
+      .add(right.clone().multiplyScalar(halfWidth));
+    const B1 = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(halfHeight))
+      .add(right.clone().multiplyScalar(halfWidth));
+    const C = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(-halfHeight))
+      .add(right.clone().multiplyScalar(halfWidth));
+    const C1 = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(-halfHeight))
+      .add(right.clone().multiplyScalar(halfWidth));
+    const D = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(-halfHeight))
+      .add(right.clone().multiplyScalar(-halfWidth));
+    const D1 = centerPosition
+      .clone()
+      .add(up.clone().multiplyScalar(-halfHeight))
+      .add(right.clone().multiplyScalar(-halfWidth));
 
-      if (r == 1 || r == 2) {
-        widthPos.negate();
-      }
+    position.push(A1.x, A1.y, A1.z);
+    position.push(B.x, B.y, B.z);
+    position.push(B1.x, B1.y, B1.z);
+    position.push(C.x, C.y, C.z);
+    position.push(C1.x, C1.y, C1.z);
+    position.push(D.x, D.y, D.z);
+    position.push(D1.x, D1.y, D1.z);
+    position.push(A.x, A.y, A.z);
 
-      const finalPos = pos.clone().add(heightPos).add(widthPos);
+    const normalA = right.clone().negate().normalize();
+    const normalA1 = up.clone().normalize();
+    const normalB = normalA1.clone();
+    const normalB1 = normalA.clone().negate();
+    const normalC = normalB1.clone();
+    const normalC1 = normalB.clone().negate();
+    const normalD = normalC1.clone();
+    const normalD1 = normalA.clone();
+    normal.push(normalA1.x, normalA1.y, normalA1.z);
+    normal.push(normalB.x, normalB.y, normalB.z);
+    normal.push(normalB1.x, normalB1.y, normalB1.z);
+    normal.push(normalC.x, normalC.y, normalC.z);
+    normal.push(normalC1.x, normalC1.y, normalC1.z);
+    normal.push(normalD.x, normalD.y, normalD.z);
+    normal.push(normalD1.x, normalD1.y, normalD1.z);
+    normal.push(normalA.x, normalA.y, normalA.z);
 
-      //得到最终的位置
-      position.push(finalPos.x, finalPos.y, finalPos.z);
+    // nowDis += pathPoint.dist;
+    //计算uv
+    const v = pathPoint.dist / totalDistance;
 
-      normal.push(normalDir.x, normalDir.y, normalDir.z);
+    // uv.push(0, v);
+    // uv.push(height / sideTotalDis, v);
+    // uv.push(height / sideTotalDis, v);
+    // uv.push((height + width) / sideTotalDis, v);
+    // uv.push((height + width) / sideTotalDis, v);
+    // uv.push((height * 2 + width) / sideTotalDis, v);
+    // uv.push((height * 2 + width) / sideTotalDis, v);
+    // uv.push(1, v);
 
-      if (r == 1 || r == 3) {
-        nowDis += width;
-      } else if (r == 2 || r == 4) {
-        nowDis += height;
-      }
+    uv.push(v, 0);
+    uv.push(v, width / sideTotalDis);
+    uv.push(v, width / sideTotalDis);
+    uv.push(v, (height + width) / sideTotalDis);
+    uv.push(v, (height + width) / sideTotalDis);
+    uv.push(v, (width * 2 + height) / sideTotalDis);
+    uv.push(v, (width * 2 + height) / sideTotalDis);
+    uv.push(v, 1);
 
-      uv.push(uvDist, nowDis / totalR);
-
-      if (generateUv2) {
-        uv2.push(uvDist2, nowDis / totalR);
-      }
-
-      verticesCount++;
-    }
-
-    if (!first) {
-      const begin1 = verticesCount - (4 + 1) * 2;
-      const begin2 = verticesCount - (4 + 1);
-
-      for (let i = 0; i < 4; i++) {
-        indices.push(
-          begin2 + i,
-          begin1 + i,
-          begin1 + i + 1,
-          begin2 + i,
-          begin1 + i + 1,
-          begin2 + i + 1
-        );
-
-        count += 6;
-      }
-    }
+    count += 8;
   }
 
   if (progressDistance > 0) {
@@ -233,11 +242,55 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
           (pathPoint.dist - prevPoint.dist);
         lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-        addVertices(lastPoint, width, height);
+        addVertices(lastPoint);
         break;
       } else {
-        addVertices(pathPoint, width, height);
+        addVertices(pathPoint);
       }
+    }
+  }
+
+  const positionNum = position.length / 3;
+  //开始计算index的连接
+  for (let i = 0; i < positionNum; i += 8) {
+    // a--------b
+    // | \      |
+    // |   \    |
+    // |     \  |
+    // c--------d
+
+    if (i + 8 < count) {
+      const a = i;
+      const b = i + 8;
+      const c = i + 1;
+      const d = i + 8 + 1;
+
+      const a1 = i + 2;
+      const b1 = i + 8 + 2;
+      const c1 = i + 3;
+      const d1 = i + 8 + 3;
+
+      const a2 = i + 4;
+      const b2 = i + 8 + 4;
+      const c2 = i + 5;
+      const d2 = i + 8 + 5;
+
+      const a3 = i + 6;
+      const b3 = i + 8 + 6;
+      const c3 = i + 7;
+      const d3 = i + 8 + 7;
+
+      indices.push(a, c, d);
+      indices.push(a, d, b);
+
+      indices.push(a1, c1, d1);
+      indices.push(a1, d1, b1);
+
+      indices.push(a2, c2, d2);
+      indices.push(a2, d2, b2);
+
+      indices.push(a3, c3, d3);
+      indices.push(a3, d3, b3);
     }
   }
 
